@@ -7,6 +7,10 @@
     "dev:frontend": "npm --prefix frontend run dev",
     "build:frontend": "npm --prefix frontend run build",
     "lint:frontend": "npm --prefix frontend run lint",
+    "dev:backend": "npm --prefix backend run dev",
+    "build:backend": "npm --prefix backend run build",
+    "lint:backend": "npm --prefix backend run lint",
+    "test:backend": "npm --prefix backend run test",
     "openapi:generate": "npm --prefix typeSpec run emit",
     "mock:api": "npm run openapi:generate && prism mock typeSpec/tsp-output/schema/openapi.yaml --host 127.0.0.1 --port 4010"
   },
