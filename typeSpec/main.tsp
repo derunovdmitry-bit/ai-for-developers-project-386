@@ -9,6 +9,12 @@ namespace CalendarBooking;
 alias AdminSessionAuth = ApiKeyAuth<ApiKeyLocation.cookie, "admin_session">;
 
 /** A single preconfigured owner profile used by the admin area and public booking pages. */
+@example(#{
+  id: "owner-main",
+  displayName: "Анна Смирнова",
+  description: "Консультации по продуктовой стратегии и запуску MVP.",
+  timezone: "Europe/Moscow",
+})
 model CalendarOwnerProfile {
   id: string;
   displayName: string;
@@ -17,6 +23,12 @@ model CalendarOwnerProfile {
 }
 
 /** A booking type that guests can choose before selecting an available slot. */
+@example(#{
+  id: "product-consultation",
+  title: "Продуктовая консультация",
+  description: "Разбор идеи, целевой аудитории и следующих шагов.",
+  durationMinutes: 30,
+})
 model EventType {
   id: string;
 
@@ -30,6 +42,11 @@ model EventType {
 }
 
 /** Request used by the owner to create an event type. The backend generates the stable id. */
+@example(#{
+  title: "Продуктовая консультация",
+  description: "Разбор идеи, целевой аудитории и следующих шагов.",
+  durationMinutes: 30,
+})
 model CreateEventTypeRequest {
   @minLength(1)
   title: string;
@@ -41,6 +58,11 @@ model CreateEventTypeRequest {
 }
 
 /** Request used by the owner to update an existing event type. The id is stable and cannot be changed. */
+@example(#{
+  title: "Стратегическая сессия",
+  description: "Подробная встреча для планирования roadmap.",
+  durationMinutes: 60,
+})
 model UpdateEventTypeRequest {
   @minLength(1)
   title: string;
@@ -52,6 +74,11 @@ model UpdateEventTypeRequest {
 }
 
 /** A manually created owner availability interval for a concrete date and time range. */
+@example(#{
+  id: "window-2026-06-20-morning",
+  startsAt: utcDateTime.fromISO("2026-06-20T06:00:00Z"),
+  endsAt: utcDateTime.fromISO("2026-06-20T09:00:00Z"),
+})
 model AvailabilityWindow {
   id: string;
   startsAt: utcDateTime;
@@ -59,18 +86,31 @@ model AvailabilityWindow {
 }
 
 /** Request used by the owner to create a manual availability interval. */
+@example(#{
+  startsAt: utcDateTime.fromISO("2026-06-20T06:00:00Z"),
+  endsAt: utcDateTime.fromISO("2026-06-20T09:00:00Z"),
+})
 model CreateAvailabilityWindowRequest {
   startsAt: utcDateTime;
   endsAt: utcDateTime;
 }
 
 /** Request used by the owner to update a manual availability interval. */
+@example(#{
+  startsAt: utcDateTime.fromISO("2026-06-21T10:00:00Z"),
+  endsAt: utcDateTime.fromISO("2026-06-21T13:00:00Z"),
+})
 model UpdateAvailabilityWindowRequest {
   startsAt: utcDateTime;
   endsAt: utcDateTime;
 }
 
 /** A slot generated from an availability window for the selected event type duration. */
+@example(#{
+  startsAt: utcDateTime.fromISO("2026-06-20T06:00:00Z"),
+  endsAt: utcDateTime.fromISO("2026-06-20T06:30:00Z"),
+  eventTypeId: "product-consultation",
+})
 model AvailableSlot {
   startsAt: utcDateTime;
   endsAt: utcDateTime;
@@ -82,6 +122,18 @@ enum BookingStatus {
 }
 
 /** A confirmed guest booking. New bookings are created as confirmed in v1. */
+@example(#{
+  id: "booking-2026-06-20-0900",
+  eventTypeId: "product-consultation",
+  eventTypeTitle: "Продуктовая консультация",
+  startsAt: utcDateTime.fromISO("2026-06-20T06:00:00Z"),
+  endsAt: utcDateTime.fromISO("2026-06-20T06:30:00Z"),
+  guestName: "Дмитрий Иванов",
+  guestEmail: "dmitry@example.com",
+  guestComment: "Хочу обсудить MVP сервиса бронирования.",
+  status: BookingStatus.confirmed,
+  createdAt: utcDateTime.fromISO("2026-06-18T10:00:00Z"),
+})
 model Booking {
   id: string;
   eventTypeId: string;
@@ -96,6 +148,13 @@ model Booking {
 }
 
 /** Request used by a guest to book one generated free slot. */
+@example(#{
+  eventTypeId: "product-consultation",
+  startsAt: utcDateTime.fromISO("2026-06-20T06:00:00Z"),
+  guestName: "Дмитрий Иванов",
+  guestEmail: "dmitry@example.com",
+  guestComment: "Хочу обсудить MVP сервиса бронирования.",
+})
 model CreateBookingRequest {
   eventTypeId: string;
   startsAt: utcDateTime;
@@ -110,18 +169,28 @@ model CreateBookingRequest {
 }
 
 /** Request used by the predefined calendar owner to sign in to the admin area. */
+@example(#{
+  password: "admin-password",
+})
 model AdminLoginRequest {
   @minLength(1)
   password: string;
 }
 
 /** Response returned after the predefined calendar owner signs in. */
+@example(#{
+  authenticated: true,
+})
 model AdminSession {
   authenticated: true;
 }
 
 /** Standard API error response. */
 @error
+@example(#{
+  code: "validation-error",
+  message: "Проверьте заполненные поля.",
+})
 model ApiError {
   code:
     | "unauthorized"
@@ -136,18 +205,78 @@ model ApiError {
   message: string;
 }
 
+@example(#{
+  items: #[
+    #{
+      id: "product-consultation",
+      title: "Продуктовая консультация",
+      description: "Разбор идеи, целевой аудитории и следующих шагов.",
+      durationMinutes: 30,
+    },
+    #{
+      id: "strategy-session",
+      title: "Стратегическая сессия",
+      description: "Подробная встреча для планирования roadmap.",
+      durationMinutes: 60,
+    },
+  ],
+})
 model EventTypeList {
   items: EventType[];
 }
 
+@example(#{
+  items: #[
+    #{
+      id: "window-2026-06-20-morning",
+      startsAt: utcDateTime.fromISO("2026-06-20T06:00:00Z"),
+      endsAt: utcDateTime.fromISO("2026-06-20T09:00:00Z"),
+    },
+    #{
+      id: "window-2026-06-21-afternoon",
+      startsAt: utcDateTime.fromISO("2026-06-21T10:00:00Z"),
+      endsAt: utcDateTime.fromISO("2026-06-21T13:00:00Z"),
+    },
+  ],
+})
 model AvailabilityWindowList {
   items: AvailabilityWindow[];
 }
 
+@example(#{
+  items: #[
+    #{
+      startsAt: utcDateTime.fromISO("2026-06-20T06:00:00Z"),
+      endsAt: utcDateTime.fromISO("2026-06-20T06:30:00Z"),
+      eventTypeId: "product-consultation",
+    },
+    #{
+      startsAt: utcDateTime.fromISO("2026-06-20T06:30:00Z"),
+      endsAt: utcDateTime.fromISO("2026-06-20T07:00:00Z"),
+      eventTypeId: "product-consultation",
+    },
+  ],
+})
 model AvailableSlotList {
   items: AvailableSlot[];
 }
 
+@example(#{
+  items: #[
+    #{
+      id: "booking-2026-06-20-0900",
+      eventTypeId: "product-consultation",
+      eventTypeTitle: "Продуктовая консультация",
+      startsAt: utcDateTime.fromISO("2026-06-20T06:00:00Z"),
+      endsAt: utcDateTime.fromISO("2026-06-20T06:30:00Z"),
+      guestName: "Дмитрий Иванов",
+      guestEmail: "dmitry@example.com",
+      guestComment: "Хочу обсудить MVP сервиса бронирования.",
+      status: BookingStatus.confirmed,
+      createdAt: utcDateTime.fromISO("2026-06-18T10:00:00Z"),
+    },
+  ],
+})
 model BookingList {
   items: Booking[];
 }

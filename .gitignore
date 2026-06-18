@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+tsp-output/
+
+# Local environment
+.env
+.env.*
+!.env.example

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "scripts": {
+    "emit": "tsp compile ."
+  },
   "dependencies": {
     "@typespec/compiler": "^1.13.0",
     "@typespec/http": "^1.13.0",
