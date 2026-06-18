@@ -6,6 +6,8 @@ using Http;
 @server("http://localhost:3000", "Local development server")
 namespace CalendarBooking;
 
+alias AdminSessionAuth = ApiKeyAuth<ApiKeyLocation.cookie, "admin_session">;
+
 /** A single preconfigured owner profile used by the admin area and public booking pages. */
 model CalendarOwnerProfile {
   id: string;
@@ -27,10 +29,19 @@ model EventType {
   durationMinutes: int32;
 }
 
-/** Request used by the owner to create an event type. */
+/** Request used by the owner to create an event type. The backend generates the stable id. */
 model CreateEventTypeRequest {
-  id: string;
+  @minLength(1)
+  title: string;
 
+  description: string;
+
+  @minValue(1)
+  durationMinutes: int32;
+}
+
+/** Request used by the owner to update an existing event type. The id is stable and cannot be changed. */
+model UpdateEventTypeRequest {
   @minLength(1)
   title: string;
 
@@ -53,6 +64,12 @@ model CreateAvailabilityWindowRequest {
   endsAt: utcDateTime;
 }
 
+/** Request used by the owner to update a manual availability interval. */
+model UpdateAvailabilityWindowRequest {
+  startsAt: utcDateTime;
+  endsAt: utcDateTime;
+}
+
 /** A slot generated from an availability window for the selected event type duration. */
 model AvailableSlot {
   startsAt: utcDateTime;
@@ -62,7 +79,6 @@ model AvailableSlot {
 
 enum BookingStatus {
   confirmed,
-  cancelled,
 }
 
 /** A confirmed guest booking. New bookings are created as confirmed in v1. */
@@ -93,12 +109,26 @@ model CreateBookingRequest {
   guestComment?: string;
 }
 
+/** Request used by the predefined calendar owner to sign in to the admin area. */
+model AdminLoginRequest {
+  @minLength(1)
+  password: string;
+}
+
+/** Response returned after the predefined calendar owner signs in. */
+model AdminSession {
+  authenticated: true;
+}
+
 /** Standard API error response. */
 @error
 model ApiError {
   code:
+    | "unauthorized"
     | "event-type-not-found"
+    | "event-type-has-upcoming-bookings"
     | "availability-window-not-found"
+    | "availability-window-has-upcoming-bookings"
     | "slot-outside-booking-window"
     | "slot-not-available"
     | "booking-conflict"
@@ -154,6 +184,21 @@ interface PublicApi {
 }
 
 @route("/admin")
+@tag("Admin Auth")
+interface AdminAuthApi {
+  /** Sign in the single predefined calendar owner using the configured admin password. */
+  @post
+  @route("/login")
+  login(@body request: AdminLoginRequest): AdminSession | ApiError;
+
+  /** Sign out the calendar owner by clearing the admin session cookie. */
+  @post
+  @route("/logout")
+  logout(): void | ApiError;
+}
+
+@useAuth(AdminSessionAuth)
+@route("/admin")
 @tag("Admin")
 interface AdminApi {
   /** Get the single predefined owner profile used by the admin area. */
@@ -166,10 +211,23 @@ interface AdminApi {
   @route("/event-types")
   listEventTypes(): EventTypeList | ApiError;
 
-  /** Create an event type with an owner-defined id, title, description, and duration. */
+  /** Create an event type. The backend generates the stable id from the title and guarantees uniqueness. */
   @post
   @route("/event-types")
   createEventType(@body request: CreateEventTypeRequest): EventType | ApiError;
+
+  /** Update an existing event type. The id is stable and cannot be changed. */
+  @put
+  @route("/event-types/{eventTypeId}")
+  updateEventType(
+    @path eventTypeId: string,
+    @body request: UpdateEventTypeRequest
+  ): EventType | ApiError;
+
+  /** Delete an event type if it has no upcoming confirmed bookings. */
+  @delete
+  @route("/event-types/{eventTypeId}")
+  deleteEventType(@path eventTypeId: string): void | ApiError;
 
   /** List manually created availability windows. */
   @get
@@ -182,6 +240,21 @@ interface AdminApi {
   createAvailabilityWindow(
     @body request: CreateAvailabilityWindowRequest
   ): AvailabilityWindow | ApiError;
+
+  /** Update an availability window if all upcoming confirmed bookings remain inside the new interval. */
+  @put
+  @route("/availability-windows/{availabilityWindowId}")
+  updateAvailabilityWindow(
+    @path availabilityWindowId: string,
+    @body request: UpdateAvailabilityWindowRequest
+  ): AvailabilityWindow | ApiError;
+
+  /** Delete an availability window if it has no upcoming confirmed bookings inside it. */
+  @delete
+  @route("/availability-windows/{availabilityWindowId}")
+  deleteAvailabilityWindow(
+    @path availabilityWindowId: string
+  ): void | ApiError;
 
   /** List upcoming confirmed bookings across all event types. */
   @get
