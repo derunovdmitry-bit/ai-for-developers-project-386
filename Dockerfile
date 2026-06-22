@@ -34,4 +34,4 @@ COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin-password} exec node backend/dist/src/index.js"]
+CMD ["node", "backend/dist/src/index.js"]
