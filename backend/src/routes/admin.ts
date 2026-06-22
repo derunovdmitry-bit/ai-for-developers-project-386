@@ -59,7 +59,11 @@ export async function registerAdminRoutes(
     const body = requireObject(request.body)
     const password = body.password
 
-    if (typeof password !== 'string' || password !== config.adminPassword) {
+    if (
+      !config.adminPassword ||
+      typeof password !== 'string' ||
+      password !== config.adminPassword
+    ) {
       throw unauthorized('Неверный пароль.')
     }
 

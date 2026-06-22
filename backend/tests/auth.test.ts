@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { readConfig } from '../src/config.js'
+import { createServer } from '../src/server.js'
 import { createTestApp, loginAsAdmin } from './helpers.js'
 
 describe('admin auth', () => {
@@ -10,6 +12,23 @@ describe('admin auth', () => {
       method: 'POST',
       url: '/admin/login',
       payload: { password: 'wrong' },
+    })
+
+    expect(response.statusCode).toBe(401)
+    expect(response.json()).toEqual({
+      code: 'unauthorized',
+      message: 'Неверный пароль.',
+    })
+  })
+
+  it('rejects login when ADMIN_PASSWORD is not configured', async () => {
+    const app = createServer(readConfig({}))
+    await app.ready()
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/login',
+      payload: { password: 'admin-password' },
     })
 
     expect(response.statusCode).toBe(401)
